@@ -1,68 +1,67 @@
-# Spirit Ink — automation case study
+<a href="https://spirit-ink.co.uk/">
+  <img src="assets/spirit-ink-banner.png" alt="Spirit Ink" width="100%">
+</a>
 
-A production e-commerce system for custom-printed school apparel. A customer designs a garment in the browser, checks out on Shopify, and the order reaches the correct print supplier before tracking returns to Shopify as a fulfilment — without manual re-keying between systems.
+# Spirit Ink automation case study
 
-I was the technical owner for the project: architecture, integrations, debugging, production safeguards, and client-facing documentation. The agreed scope was completed and delivered on **15 September 2026**.
+Spirit Ink is an e-commerce automation project for custom-printed school clothing.
 
-> **This repository is a written case study, not the production source code.** The production repository is private. Credentials, infrastructure identifiers, webhook URLs, supplier identities, operational IDs and commercial terms are deliberately excluded.
+Customers create a design in the browser and buy through Shopify. After payment, the automation prepares the order for production, sends it to the correct print supplier and brings tracking back into Shopify.
 
----
+On the technical side, I was responsible for the system design, the integrations between services, production safeguards, technical troubleshooting and project handoff. The agreed scope was completed on **15 September 2026**.
 
 ## The problem
 
-Schools and PTAs sell branded apparel to raise funds. Setting up a school store manually means collecting artwork, producing mockups, creating Shopify products and variants, mapping each sellable option to the right supplier, and then moving paid orders and tracking information between systems.
+Spirit Ink works with schools and PTAs that want to sell branded clothing.
 
-That work scales with every school and every product option. It also fails badly when identifiers are confused: a value that looks plausible can still route the wrong garment to a supplier.
+Without automation, the work includes designing graphics, collecting artwork, setting up products, preparing print files, keeping track of supplier variants, sending orders to the right supplier and updating Shopify when they ship. The workload grows with every school and product option.
 
-The design goal was therefore simple: **automate the path, but refuse to guess when authoritative data is missing.**
+The goal was to automate as much of that process as possible while still stopping when important supplier data was missing or uncertain.
 
 ## What the system does
 
 ```mermaid
 flowchart LR
-  MP["Magic Preview<br/>design + composition"] --> M0["SI-MP-00<br/>product + mapping"]
-  M0 --> SHOP["Shopify<br/>checkout"]
-  SHOP --> M1["SI-MP-01<br/>paid order-line"]
-  M1 --> M2["SI-MP-02<br/>production package"]
-  M2 --> M3["SI-MP-03<br/>supplier dispatch"]
-  M3 --> SUP["Print supplier"]
-  SUP --> M4["SI-MP-04<br/>tracking"]
-  M4 --> F["Shopify<br/>fulfilment"]
+  A[Create a design] --> B[Create product in Shopify]
+  B --> C[Customer checks out]
+  C --> D[Check supplier mapping]
+  D --> E[Prepare print files]
+  E --> F[Send order to supplier]
+  F --> G[Receive tracking]
+  G --> H[Update Shopify]
 
-  SS["SI-SS-01<br/>School Store provisioning"] --> SC["School collection<br/>+ owner account"]
-  SC --> MP
+  S[School account] --> T[Create or manage school store]
+  T --> A
 ```
 
-Six automation scenarios support the delivered system. Five form the commerce and fulfilment path; one handles School Store provisioning and authenticated account-management actions.
+The customer stays in the Spirit Ink and Shopify flow. Once an order is paid, the automation handles the production steps in the background.
 
-The catalogue spans **nine product families** across two print suppliers. The current front/back production registry supports **seven** of those families with Front only, Back only, or Front + Back compositions.
+Schools also have a separate store-management flow. They can build a school range, keep it as a draft, submit it for review and manage it later from the same customer account.
 
-The primary supplier path has natural paid-order end-to-end proof through production, shipment, carrier tracking and Shopify fulfilment. The second supplier path is live for confirmed mappings; its first natural paid order remains useful production evidence, but it is not an unfinished project requirement.
+The system covers nine product families across two print suppliers. Seven currently support front printing, back printing or both. The main supplier flow has completed a real paid order from Shopify checkout through shipment, tracking and fulfilment. The second supplier is live for mappings that have been fully verified.
 
-## What I was responsible for
+## My role
 
-- **Architecture** — assigning a single authority for each category of data and keeping product/catalogue authority out of the orchestration layer.
-- **Integrations** — Shopify Admin GraphQL, a signed Shopify App Proxy, two supplier APIs, Airtable runtime state, Cloudinary assets, and a backend service on Google Cloud Run.
-- **Debugging** — reproducing and root-causing failures that crossed browser, orchestration, backend, Shopify and supplier boundaries.
-- **Safety design** — idempotency, fail-closed supplier routing, strict signature handling, and human approval gates for irreversible or customer-visible actions.
-- **Documentation and client communication** — maintaining an operational source of truth, recording decisions as they changed, and handing off the delivered system in a form another operator could continue from.
+I defined how the services should connect and where each type of data should live.
+
+I was responsible for the integrations between Shopify, Make, Airtable, Google Cloud Run, Cloudinary and the two print supplier APIs.
+
+I investigated issues that crossed more than one system, including Shopify request handling, Make workflow behaviour, supplier data and fulfilment edge cases.
+
+For the higher-risk parts of the flow, I added checks to prevent duplicate supplier orders, incorrect product routing and unintended customer-facing publication.
+
+I also kept the project documentation current and prepared the final handoff so another person could understand the live setup without reconstructing it from old tests or incident notes.
 
 ## Read next
 
 | Document | What's in it |
 | --- | --- |
-| [Architecture](docs/architecture.md) | The components, boundaries, and authority model |
-| [Decisions](docs/decisions.md) | Six choices that shaped the system, including their costs |
-| [Debugging](docs/debugging.md) | Four representative integration failures and their root causes |
-| [Reliability](docs/reliability.md) | Fail-closed behaviour, idempotency and human gates |
-| [How I work](docs/how-i-work.md) | AI-assisted implementation and the operating discipline around it |
+| [Architecture](docs/architecture.md) | How the main components fit together and where each type of data lives |
+| [Decisions](docs/decisions.md) | Technical decisions and the tradeoffs behind them |
+| [Technical troubleshooting](docs/troubleshooting.md) | Examples of cross-system issues I investigated |
+| [Reliability](docs/reliability.md) | Checks around supplier routing, duplicate actions and unsafe retries |
+| [Project ownership](docs/project-ownership.md) | How I coordinated the work, validated changes and handled handoff |
 
 ## Stack
 
-Shopify (Admin GraphQL, App Proxy, Liquid theme) · Make · Airtable · Google Cloud Run · Cloudinary · two print-on-demand supplier APIs · GitHub
-
-## Confidentiality
-
-This repository is intentionally publishable. It contains no credentials, private webhook URLs, internal base/table/record/connection/scenario IDs, theme IDs, supplier names, customer data, contract terms or client pricing.
-
-The project name is retained for the case study; operational details that are not needed to evaluate the work are not.
+Shopify, Make, Airtable, Google Cloud Run, Cloudinary, GitHub and two print-on-demand supplier APIs.
