@@ -1,69 +1,55 @@
 # Decisions
 
-Six choices that shaped the system. Each one includes the cost, because the trade-off is part of the decision.
+These are the main technical choices that shaped the system and the tradeoffs that came with them.
 
----
+## 1. Do not guess supplier identifiers
 
-## 1. Supplier identifiers are sourced, never inferred
+Supplier product identifiers only come from confirmed supplier data. If an exact value is missing, that mapping stays incomplete and the order line cannot be sent to production.
 
-**Decision.** Supplier product identifiers are populated only from authoritative supplier data. If an exact value is missing, the mapping stays incomplete and that line cannot be dispatched.
+Internal SKUs are readable and supplier codes can look similar, which makes guessing tempting. A plausible-looking identifier can still point to the wrong product.
 
-**Why.** Internal SKUs are intentionally readable, and supplier identifiers can look as though they follow the same pattern. Deriving one from the other can produce a plausible identifier that is still wrong — exactly the kind of error that can send the wrong garment into production without an obvious software exception.
+**Tradeoff:** any product option without a confirmed supplier identifier stays unavailable until it is verified.
 
-**Cost.** One Supplier B cap colour/size mapping remains intentionally fail-closed because its authoritative supplier identity has not been confirmed. A guess could remove the blocker quickly; the system does not treat a guess as data.
+## 2. Keep the commerce stages separate
 
----
+The paid-order flow is split across five Make scenarios instead of one long workflow.
 
-## 2. Separate scenarios instead of one long pipeline
+Each stage has a different recovery path. A supplier timeout may be safe to retry. Invalid production data needs correction. An uncertain create-order result needs reconciliation before another request is sent.
 
-**Decision.** The commerce path is split into five orchestration scenarios.
+**Tradeoff:** there are more workflows to maintain, and state has to persist between them.
 
-**Why.** Each stage has a different failure model. A transient supplier timeout may be retryable; malformed production geometry needs intervention; an ambiguous create-order outcome must stop rather than retry blindly.
+## 3. Use Airtable for runtime state
 
-**Cost.** There are more moving parts, and state must be durable between stages instead of living only inside one execution.
+Airtable holds supplier mappings, runtime configuration, queues and order state. Product availability is controlled elsewhere.
 
----
+This avoids turning a convenient operational table into an accidental product allowlist. A valid product should not stop working simply because someone forgot to add a row to Airtable.
 
-## 3. Airtable is runtime state, not a catalogue
+**Tradeoff:** some changes need an explicit backend or contract update instead of a quick table edit.
 
-**Decision.** Airtable holds operational mappings, configuration, queues and the order ledger. It does not decide which products exist or what may be sold.
+## 4. Keep human approval before publication
 
-**Why.** The failure mode is gradual: a table gets one row per sellable thing for convenience; an automation starts checking for that row; later a valid product silently stops working because the table has become an accidental allowlist.
+The automation can prepare products and school stores for review, but a person still approves customer-facing publication.
 
-**Cost.** Some changes that could have been implemented as a quick table lookup instead require an explicit backend or contract change.
+That review point is useful because artwork and presentation are easier for a person to judge than for an automation. It also limits the impact of a bad assumption before customers can see it.
 
----
+**Tradeoff:** the process includes a short manual step.
 
-## 4. Human approval stays at irreversible boundaries
+## 5. Read the live Make scenario before changing it
 
-**Decision.** Automation prepares products and school stores for review, but customer-visible publication remains gated by a person.
+Before editing a live scenario, I read its current state and change only the modules involved in the issue. Older exported blueprints are kept as reference material.
 
-**Why.** Automation makes correct work fast, but it also makes a bad assumption propagate quickly. The client is the right authority for whether school artwork and presentation are ready to publish.
+Re-importing an old blueprint can overwrite newer live changes or alter parts of the scenario that were not meant to change.
 
-**Cost.** The system is intentionally not described as fully hands-off. A short review step is retained where the cost of a wrong automated decision would reach a customer.
+**Tradeoff:** this is slower than applying broad updates from an old export.
 
----
+## 6. Treat front and back as separate placements
 
-## 5. Live orchestration is patched from current state, not old exports
+A product can be Front only, Back only, or Front + Back. Each side has its own artwork, geometry, offset, scale and template.
 
-**Decision.** Before changing a live scenario, read its current state and patch only the required modules. Exported blueprints are evidence and backup context, not deployment authority.
+This is necessary when the front and back use different artwork or different physical print areas. A single front/back flag would not carry enough information for production.
 
-**Why.** Reapplying an older stored blueprint can overwrite newer live work or alter platform metadata outside the intended change. In a production-sensitive automation, that is a larger risk than making a smaller live patch after a fresh readback.
+**Tradeoff:** the composition model and production package are more complex than a simple boolean setting.
 
-**Cost.** Changes take longer and are less suitable for broad batch updates.
+## What I would improve next
 
----
-
-## 6. Front and back are independent placements
-
-**Decision.** A composition can be Front only, Back only, or Front + Back. Each side has its own geometry, offset, scale, template and design identity. The same artwork can be used on both sides, but the placements remain independent.
-
-**Why.** Treating back print as a boolean on a front-print product fails as soon as the artwork differs by side or the physical print areas differ. Independent placements keep those cases explicit in the production contract.
-
-**Cost.** The model and production-package contract are larger than a simple front/back flag, and the change required a real contract migration rather than a cosmetic UI switch.
-
----
-
-## What I'd revisit
-
-The approval gate is manual by design, but the waiting queue could be instrumented better. The client can see what is pending; the next improvement would be ageing/notification around how long an item has been waiting for review.
+The approval queue could be easier to monitor. The client can already see what is waiting for review, but ageing and notifications would make it clearer when something has been sitting there for too long.

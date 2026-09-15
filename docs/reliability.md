@@ -1,39 +1,37 @@
 # Reliability
 
-The system can spend real money and create physical fulfilment work, so the important behaviour is what happens when data is missing or the outcome of an external call is uncertain.
+This system can spend real money and create physical supplier orders, so missing data and uncertain API outcomes need to be handled carefully.
 
-## Fail closed, and record why
+## Stop when supplier data is missing
 
-When required supplier data is missing, a line does not dispatch. It stops with a named, machine-readable blocker describing what is unconfirmed.
+If the system does not have the exact supplier data it needs, the order line stops before dispatch. The blocker records what is missing so the issue can be resolved without guessing.
 
-That makes the failure actionable. A generic error says only that automation stopped; a precise blocker says which supplier fact must be obtained before the line can safely continue.
+Any mapping without a confirmed supplier identifier stays unavailable until it is verified.
 
-One Supplier B cap colour/size mapping is intentionally held on this basis. It remains fail-closed until authoritative supplier identity data exists. This is a known data limitation, not an implementation defect.
+## Avoid duplicate supplier orders
 
-## Claim before create
+Before creating a supplier order, the system checks whether that order line already has a supplier order ID. If it does, no new order is created.
 
-Supplier dispatch uses claim-before-create semantics. If a supplier order identifier already exists for an order line, the system does not create another order.
+A harder case is when the request was sent but the response never came back. The supplier may have created the order even though the automation cannot confirm it. Those cases go to manual review before any retry, because sending the same order again could create a duplicate and charge the client twice.
 
-The harder case is an ambiguous outcome: the create request left the system, but the response did not return. The supplier order may or may not exist. That state routes to manual review rather than blind retry, because retrying can create a duplicate physical order and charge the client twice.
+## Keep publication under human review
 
-## Humans gate customer-visible actions
+The automation prepares school stores and products up to a reviewable state. A person approves them before they become customer-facing.
 
-Automation prepares school-store and product work up to a reviewable state. Publication remains human-approved.
-
-The review surface therefore needs to show the thing being approved — rendered artwork and customer-facing presentation — rather than only raw field values. A gate is useful only if the person can evaluate it quickly and correctly.
+The review page shows the rendered artwork and customer-facing presentation, not just database fields, so the person approving it can see what customers will see.
 
 ## Safety rules
 
-- Production routing acts only on exact, confirmed supplier mappings.
-- Products and school stores reach customer-visible publication only after the relevant review gate.
-- Credentials, webhook URLs, approval tokens and infrastructure identifiers stay out of version control and working documentation.
-- Signature verification, authenticated identity, supplier mapping and idempotency checks fail closed.
-- Ambiguous supplier-create outcomes stop for reconciliation instead of retrying blindly.
-- Live system readback overrides stale exports or documentation when they disagree.
-- Real paid supplier orders are not manufactured solely to make an end-to-end proof claim true.
+1. Supplier routing only uses exact, confirmed mappings.
+2. Products and school stores are reviewed before customer-facing publication.
+3. Credentials, webhook URLs, approval tokens and infrastructure identifiers stay out of version control.
+4. Signature, identity, supplier-mapping and duplicate-order checks stop the flow when they fail.
+5. Uncertain supplier-order creation goes to manual reconciliation before retry.
+6. When documentation and the live system disagree, the live system is checked again before making a change.
+7. Real supplier orders are not created just to produce an end-to-end test result.
 
-## What "done" means here
+## Production proof
 
-The primary supplier path has natural paid-order proof through the five-stage automation: production, shipment, carrier tracking and Shopify fulfilment all completed on the real path.
+The main supplier path has completed a real paid order through production, shipment, carrier tracking and Shopify fulfilment.
 
-The second supplier path is active for confirmed mappings. Its first natural paid order remains useful post-delivery evidence, but it is not required for the project to be considered complete. Missing supplier data continues to fail closed until the authoritative value exists.
+The second supplier path is active for confirmed mappings, with routing and supplier integration verified. Its first natural paid order on that path has not yet occurred.

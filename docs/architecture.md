@@ -1,56 +1,56 @@
 # Architecture
 
-## One owner per fact
+## One owner per type of data
 
-The system crosses several services, so the most important architecture rule is that each category of truth has one authority. A convenient duplicate becomes dangerous once another component starts treating it as canonical.
+The system uses several services, so each type of data has one clear source of truth. Other systems may keep references or working copies, but they should not become competing authorities.
 
-| System | Owns |
+| System | Main responsibility |
 | --- | --- |
-| **Backend service** (Cloud Run) | Product/colour/composition identity, print geometry and production contracts |
-| **Shopify** | Commerce resources, checkout and customer data, orders and fulfilment records |
-| **Airtable** | Lean durable operational state: supplier mappings, runtime configuration, queues and order ledger |
-| **Make** | Orchestration, state transitions and safety guards; not product or catalogue authority |
+| **Backend service** (Cloud Run) | Product, colour and composition identity; print geometry; production contracts |
+| **Shopify** | Products and variants, checkout, customer data, orders and fulfilment records |
+| **Airtable** | Supplier mappings, runtime configuration, queues and order state |
+| **Make** | Workflow orchestration, state transitions and safety checks |
 
-Airtable is deliberately **not** a product catalogue or allowlist. Make can enforce workflow state and safety conditions, but it does not hard-code which products, colours, sizes or suppliers exist.
+Airtable stores operational data, but it does not decide which products are allowed to exist. The Make workflows also avoid hard-coding product names, colours, sizes or supplier options.
 
-## The commerce path
+## Commerce flow
 
-Five scenarios divide the commerce flow by failure domain:
+The paid-order path is split into five stages:
 
-1. **Product creation and mapping** — turns a finished composition into the required Shopify resources and records the exact downstream supplier mapping.
-2. **Paid order-line ingestion** — takes paid Shopify order lines into durable runtime state.
-3. **Production package build** — assembles the artwork references, placement geometry and composition data required for production.
-4. **Supplier dispatch** — routes each line to the correct supplier and creates the supplier order only after idempotency and mapping checks pass.
-5. **Tracking and fulfilment** — reconciles supplier tracking back into Shopify as a fulfilment.
+1. Create the Shopify product and save the supplier mapping.
+2. Bring paid Shopify order lines into the runtime state.
+3. Build the production package with artwork and placement data.
+4. Send each line to the correct supplier after the required checks pass.
+5. Bring supplier tracking back into Shopify fulfilment.
 
-Keeping these stages separate gives each one its own retry and recovery behaviour. A supplier timeout, malformed placement data and an ambiguous create-order outcome should not share the same error strategy.
+These stages are separate because they fail in different ways. A temporary supplier timeout can be retried. Invalid print-placement data needs correction. An uncertain supplier-order creation needs manual reconciliation before anything is sent again.
 
-## The routing identity problem
+## Product and supplier identifiers
 
-A garment can carry several identifiers that look similar but have different semantics:
+The same garment can have several identifiers:
 
-- the **internal Shopify SKU** — a label used inside the commerce system
-- the **supplier variant SKU** — the supplier's variant label
-- the **supplier API product identifier** — the identifier accepted by the supplier API
+1. An internal Shopify SKU used for reference inside the store.
+2. A supplier variant SKU.
+3. A supplier API product identifier used when placing the supplier order.
 
-They are not interchangeable and are never derived from one another.
+They may look similar, but they serve different purposes.
 
-The exact Shopify **ProductVariant GID** is the downstream routing identity. Human-readable labels and internal SKUs are reference data for people, not routing keys for machines. Supplier identifiers are populated only from authoritative supplier data. If an exact mapping is missing, dispatch fails closed rather than inferring one.
+The exact Shopify **ProductVariant GID** is used to identify the selected Shopify variant in the downstream flow. Supplier identifiers only come from confirmed supplier data. If the exact mapping is missing, the line stops instead of trying to infer one.
 
-See [Reliability](reliability.md) for the failure behaviour around missing or ambiguous supplier data.
+See [Reliability](reliability.md) for how missing and uncertain supplier data is handled.
 
-## Product-agnostic by constraint
+## Product setup
 
-Product names, IDs, colours, sizes, prices, variant counts and supplier examples are not hard-coded into the orchestration layer. Adding a product family is primarily a data/contract change rather than a new branch in Make.
+Product names, IDs, colours, sizes, prices and variant counts are kept out of the Make workflow logic. Adding a new product family is mainly a catalogue and production-contract change rather than a new hard-coded branch in the automation.
 
-The delivered catalogue covers nine product families. Front/back production is currently registry-driven for seven families, each supporting Front only, Back only, or Front + Back where the production contract allows it.
+The delivered catalogue covers nine product families. Seven currently support front printing, back printing or both through the production registry.
 
-That distinction matters: the catalogue scope and the back-print registry are related, but they are not the same thing.
+The full catalogue and the front/back print registry are separate pieces of configuration, so the two numbers are not expected to match.
 
 ## School stores
 
-Each school is a tenant represented inside one Shopify store. School-specific presentation metadata can change without changing the canonical product identity.
+All school stores live inside the same Shopify store. A school can have its own display names and descriptions without changing the shared Shopify product itself.
 
-That avoids a common multi-tenant failure: renaming a shared Shopify product for one school would rename it everywhere. School-specific names and descriptions therefore sit in the presentation layer rather than mutating the shared commerce resource.
+This matters because the same product may appear in more than one school store. Changing the shared Shopify product name for one school would affect every other school using it.
 
-Store management uses authenticated Shopify customer identity through a signed App Proxy path. Draft management actions, such as rename and logical delete, re-read the school by authenticated customer identity plus stable school ID and reject incompatible states before changing anything.
+Store management is tied to the signed-in Shopify customer through the App Proxy flow. Before a draft school is renamed or deleted, the system checks the customer identity, the school ID and the current school state.
