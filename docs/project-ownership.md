@@ -1,31 +1,31 @@
-# Project ownership
+# Responsabilità sul progetto
 
-## Keeping the work coordinated
+## Mantenere il lavoro coordinato
 
-The project spans several connected services, so I kept one current source of truth for the system state and checked the live setup before making changes.
+Il progetto coinvolge diversi servizi collegati tra loro, quindi ho mantenuto una fonte di verità aggiornata sullo stato del sistema e verificato la configurazione live prima di apportare modifiche.
 
-That mattered most when work continued across different sessions or touched more than one platform. If the documentation and the live system disagreed, I treated that as something to resolve before changing anything.
+Questo è stato particolarmente importante quando il lavoro proseguiva in sessioni diverse o coinvolgeva più piattaforme. Se la documentazione e il sistema live non coincidevano, consideravo quella discrepanza come qualcosa da risolvere prima di cambiare altro.
 
-## Making changes safely
+## Apportare modifiche in sicurezza
 
-I tried to keep live changes narrow and reversible. Before editing a Make scenario, I checked its current state and changed only the part involved in the issue.
+Ho cercato di mantenere le modifiche live circoscritte e reversibili. Prima di intervenire su uno scenario Make, ne controllavo lo stato corrente e modificavo soltanto la parte coinvolta nel problema.
 
-For higher-risk actions, such as supplier order creation or customer-facing publication, the system uses explicit checks or human review instead of assuming that an uncertain state is safe.
+Per azioni a rischio più elevato, come la creazione di ordini presso i fornitori o la pubblicazione visibile ai clienti, il sistema utilizza controlli espliciti o una revisione umana invece di assumere che uno stato incerto sia sicuro.
 
-## Working with a non-technical client
+## Lavorare con un cliente non tecnico
 
-I translated technical states into clear next actions.
+Ho tradotto gli stati tecnici in azioni successive chiare.
 
-For example, instead of describing a product option as "fail-closed pending authoritative data", I would explain that it could not be sold yet because the supplier had not confirmed the required identifier, then state exactly what information was needed.
+Per esempio, invece di descrivere un'opzione prodotto come "fail-closed pending authoritative data", avrei spiegato che non poteva ancora essere venduta perché il fornitore non aveva confermato l'identificativo richiesto, indicando poi con precisione quale informazione fosse necessaria.
 
-I used the same approach for status updates. Built, deployed, tested and proven through a real order are different stages, so I kept those distinctions clear when reporting progress.
+Ho usato lo stesso approccio per gli aggiornamenti di stato. Costruito, distribuito, testato e dimostrato tramite un ordine reale sono fasi diverse, quindi ho mantenuto chiare queste distinzioni nel comunicare l'avanzamento.
 
-## Using AI during implementation
+## Uso dell'AI durante l'implementazione
 
-I used AI coding agents extensively as part of the implementation process. I remained responsible for the requirements, architecture decisions, constraints given to the agents, validation against the live system and final acceptance of changes.
+Ho utilizzato ampiamente agenti AI per il coding durante il processo di implementazione. Sono rimasto responsabile dei requisiti, delle decisioni architetturali, dei vincoli forniti agli agenti, della validazione rispetto al sistema live e dell'accettazione finale delle modifiche.
 
-That meant checking generated changes against the actual system rather than treating a plausible output as proof that something worked.
+Questo significava verificare le modifiche generate rispetto al sistema reale, invece di considerare un output plausibile come prova che qualcosa funzionasse.
 
 ## Handoff
 
-I kept the project documentation current throughout the work and prepared a final handoff that explains the live architecture, open evidence points and operating constraints without relying on old chat history or debugging notes.
+Ho mantenuto aggiornata la documentazione del progetto durante tutto il lavoro e preparato un handoff finale che descrive l'architettura live, i punti ancora da dimostrare e i vincoli operativi senza dipendere da vecchie chat o note di debugging.
