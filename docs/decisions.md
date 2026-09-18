@@ -1,55 +1,55 @@
-# Decisions
+# Decisioni
 
-These are the main technical choices that shaped the system and the tradeoffs that came with them.
+Queste sono le principali scelte tecniche che hanno definito il sistema e i compromessi che hanno comportato.
 
-## 1. Do not guess supplier identifiers
+## 1. Non dedurre gli identificativi dei fornitori
 
-Supplier product identifiers only come from confirmed supplier data. If an exact value is missing, that mapping stays incomplete and the order line cannot be sent to production.
+Gli identificativi prodotto dei fornitori provengono esclusivamente da dati confermati dal fornitore. Se manca un valore esatto, quel mapping rimane incompleto e la riga d'ordine non può essere inviata in produzione.
 
-Internal SKUs are readable and supplier codes can look similar, which makes guessing tempting. A plausible-looking identifier can still point to the wrong product.
+Gli SKU interni sono leggibili e i codici dei fornitori possono sembrare simili, quindi sarebbe facile essere tentati di dedurre il valore mancante. Un identificativo apparentemente plausibile può comunque puntare al prodotto sbagliato.
 
-**Tradeoff:** any product option without a confirmed supplier identifier stays unavailable until it is verified.
+**Compromesso:** qualsiasi opzione di prodotto priva di un identificativo fornitore confermato rimane non disponibile finché non viene verificata.
 
-## 2. Keep the commerce stages separate
+## 2. Tenere separate le fasi del flusso commerciale
 
-The paid-order flow is split across five Make scenarios instead of one long workflow.
+Il flusso dell'ordine pagato è suddiviso in cinque scenari Make invece di un unico workflow lungo.
 
-Each stage has a different recovery path. A supplier timeout may be safe to retry. Invalid production data needs correction. An uncertain create-order result needs reconciliation before another request is sent.
+Ogni fase ha un percorso di recupero diverso. Un timeout del fornitore può essere sicuro da ritentare. Dati di produzione non validi richiedono una correzione. Un risultato incerto nella creazione dell'ordine richiede una riconciliazione prima di inviare un'altra richiesta.
 
-**Tradeoff:** there are more workflows to maintain, and state has to persist between them.
+**Compromesso:** ci sono più workflow da mantenere e lo stato deve persistere tra uno e l'altro.
 
-## 3. Use Airtable for runtime state
+## 3. Usare Airtable per lo stato operativo
 
-Airtable holds supplier mappings, runtime configuration, queues and order state. Product availability is controlled elsewhere.
+Airtable contiene i mapping dei fornitori, la configurazione runtime, le code e lo stato degli ordini. La disponibilità dei prodotti viene controllata altrove.
 
-This avoids turning a convenient operational table into an accidental product allowlist. A valid product should not stop working simply because someone forgot to add a row to Airtable.
+Questo evita che una tabella operativa comoda da usare si trasformi involontariamente in una allowlist dei prodotti. Un prodotto valido non dovrebbe smettere di funzionare soltanto perché qualcuno ha dimenticato di aggiungere una riga in Airtable.
 
-**Tradeoff:** some changes need an explicit backend or contract update instead of a quick table edit.
+**Compromesso:** alcune modifiche richiedono un aggiornamento esplicito del backend o del contratto invece di una rapida modifica alla tabella.
 
-## 4. Keep human approval before publication
+## 4. Mantenere l'approvazione umana prima della pubblicazione
 
-The automation can prepare products and school stores for review, but a person still approves customer-facing publication.
+L'automazione può preparare prodotti e store scolastici per la revisione, ma la pubblicazione visibile ai clienti viene comunque approvata da una persona.
 
-That review point is useful because artwork and presentation are easier for a person to judge than for an automation. It also limits the impact of a bad assumption before customers can see it.
+Questo punto di revisione è utile perché artwork e presentazione sono più facili da valutare per una persona che per un'automazione. Limita inoltre l'impatto di un'ipotesi errata prima che possa diventare visibile ai clienti.
 
-**Tradeoff:** the process includes a short manual step.
+**Compromesso:** il processo include un breve passaggio manuale.
 
-## 5. Read the live Make scenario before changing it
+## 5. Leggere lo scenario Make live prima di modificarlo
 
-Before editing a live scenario, I read its current state and change only the modules involved in the issue. Older exported blueprints are kept as reference material.
+Prima di modificare uno scenario live, ne leggo lo stato corrente e intervengo soltanto sui moduli coinvolti nel problema. I vecchi blueprint esportati vengono conservati come materiale di riferimento.
 
-Re-importing an old blueprint can overwrite newer live changes or alter parts of the scenario that were not meant to change.
+Reimportare un vecchio blueprint può sovrascrivere modifiche live più recenti oppure alterare parti dello scenario che non dovevano essere toccate.
 
-**Tradeoff:** this is slower than applying broad updates from an old export.
+**Compromesso:** è un approccio più lento rispetto all'applicazione di modifiche ampie partendo da un vecchio export.
 
-## 6. Treat front and back as separate placements
+## 6. Trattare fronte e retro come posizionamenti separati
 
-A product can be Front only, Back only, or Front + Back. Each side has its own artwork, geometry, offset, scale and template.
+Un prodotto può essere solo Fronte, solo Retro oppure Fronte + Retro. Ogni lato ha il proprio artwork, la propria geometria, offset, scala e template.
 
-This is necessary when the front and back use different artwork or different physical print areas. A single front/back flag would not carry enough information for production.
+Questo è necessario quando fronte e retro utilizzano artwork differenti o aree fisiche di stampa diverse. Un semplice flag fronte/retro non conterrebbe abbastanza informazioni per la produzione.
 
-**Tradeoff:** the composition model and production package are more complex than a simple boolean setting.
+**Compromesso:** il modello di composizione e il pacchetto di produzione sono più complessi rispetto a una semplice impostazione booleana.
 
-## What I would improve next
+## Cosa migliorerei in seguito
 
-The approval queue could be easier to monitor. The client can already see what is waiting for review, but ageing and notifications would make it clearer when something has been sitting there for too long.
+La coda di approvazione potrebbe essere più facile da monitorare. Il cliente può già vedere cosa è in attesa di revisione, ma indicatori sul tempo trascorso e notifiche renderebbero più evidente quando qualcosa resta fermo troppo a lungo.
