@@ -1,56 +1,56 @@
-# Architecture
+# Architettura
 
-## One owner per type of data
+## Una fonte autorevole per ogni tipo di dato
 
-The system uses several services, so each type of data has one clear source of truth. Other systems may keep references or working copies, but they should not become competing authorities.
+Il sistema utilizza diversi servizi, quindi ogni tipo di dato ha una fonte di verità ben definita. Gli altri sistemi possono conservarne riferimenti o copie operative, ma non devono diventare fonti concorrenti.
 
-| System | Main responsibility |
+| Sistema | Responsabilità principale |
 | --- | --- |
-| **Backend service** (Cloud Run) | Product, colour and composition identity; print geometry; production contracts |
-| **Shopify** | Products and variants, checkout, customer data, orders and fulfilment records |
-| **Airtable** | Supplier mappings, runtime configuration, queues and order state |
-| **Make** | Workflow orchestration, state transitions and safety checks |
+| **Servizio backend** (Cloud Run) | Identità di prodotti, colori e composizioni; geometria di stampa; contratti di produzione |
+| **Shopify** | Prodotti e varianti, checkout, dati cliente, ordini e record di fulfilment |
+| **Airtable** | Mapping dei fornitori, configurazione runtime, code e stato degli ordini |
+| **Make** | Orchestrazione dei workflow, transizioni di stato e controlli di sicurezza |
 
-Airtable stores operational data, but it does not decide which products are allowed to exist. The Make workflows also avoid hard-coding product names, colours, sizes or supplier options.
+Airtable conserva i dati operativi, ma non decide quali prodotti possano esistere. I workflow Make evitano inoltre di codificare direttamente nomi prodotto, colori, taglie o opzioni dei fornitori.
 
-## Commerce flow
+## Flusso commerciale
 
-The paid-order path is split into five stages:
+Il percorso di un ordine pagato è suddiviso in cinque fasi:
 
-1. Create the Shopify product and save the supplier mapping.
-2. Bring paid Shopify order lines into the runtime state.
-3. Build the production package with artwork and placement data.
-4. Send each line to the correct supplier after the required checks pass.
-5. Bring supplier tracking back into Shopify fulfilment.
+1. Creare il prodotto Shopify e salvare il mapping del fornitore.
+2. Portare le righe dell'ordine Shopify pagato nello stato operativo.
+3. Costruire il pacchetto di produzione con artwork e dati di posizionamento.
+4. Inviare ogni riga al fornitore corretto dopo il superamento dei controlli richiesti.
+5. Riportare il tracking del fornitore nel fulfilment Shopify.
 
-These stages are separate because they fail in different ways. A temporary supplier timeout can be retried. Invalid print-placement data needs correction. An uncertain supplier-order creation needs manual reconciliation before anything is sent again.
+Le fasi sono separate perché possono fallire in modi diversi. Un timeout temporaneo del fornitore può essere ritentato. Dati di posizionamento stampa non validi richiedono una correzione. Se non è certo che un ordine al fornitore sia stato creato, serve una riconciliazione manuale prima di inviare qualsiasi nuova richiesta.
 
-## Product and supplier identifiers
+## Identificativi di prodotto e fornitore
 
-The same garment can have several identifiers:
+Lo stesso capo può avere diversi identificativi:
 
-1. An internal Shopify SKU used for reference inside the store.
-2. A supplier variant SKU.
-3. A supplier API product identifier used when placing the supplier order.
+1. Uno SKU Shopify interno, usato come riferimento all'interno dello store.
+2. Uno SKU variante del fornitore.
+3. Un identificativo prodotto usato dall'API del fornitore quando viene creato l'ordine.
 
-They may look similar, but they serve different purposes.
+Possono sembrare simili, ma hanno funzioni diverse.
 
-The exact Shopify **ProductVariant GID** is used to identify the selected Shopify variant in the downstream flow. Supplier identifiers only come from confirmed supplier data. If the exact mapping is missing, the line stops instead of trying to infer one.
+L'esatto **ProductVariant GID** di Shopify viene usato per identificare la variante Shopify selezionata nel flusso downstream. Gli identificativi del fornitore provengono esclusivamente da dati confermati dal fornitore. Se manca il mapping esatto, la riga viene bloccata invece di tentare di dedurlo.
 
-See [Reliability](reliability.md) for how missing and uncertain supplier data is handled.
+Vedi [Affidabilità](reliability.md) per sapere come vengono gestiti dati mancanti o incerti dei fornitori.
 
-## Product setup
+## Configurazione dei prodotti
 
-Product names, IDs, colours, sizes, prices and variant counts are kept out of the Make workflow logic. Adding a new product family is mainly a catalogue and production-contract change rather than a new hard-coded branch in the automation.
+Nomi prodotto, ID, colori, taglie, prezzi e numero di varianti restano fuori dalla logica dei workflow Make. Aggiungere una nuova famiglia di prodotto richiede principalmente una modifica al catalogo e al contratto di produzione, invece di un nuovo ramo hard-coded nell'automazione.
 
-The delivered catalogue covers nine product families. Seven currently support front printing, back printing or both through the production registry.
+Il catalogo consegnato copre nove famiglie di prodotto. Sette supportano attualmente la stampa sul fronte, sul retro o su entrambi tramite il registro di produzione.
 
-The full catalogue and the front/back print registry are separate pieces of configuration, so the two numbers are not expected to match.
+Il catalogo completo e il registro di stampa fronte/retro sono configurazioni separate, quindi non è previsto che i due numeri coincidano.
 
-## School stores
+## Store scolastici
 
-All school stores live inside the same Shopify store. A school can have its own display names and descriptions without changing the shared Shopify product itself.
+Tutti gli store scolastici vivono all'interno dello stesso store Shopify. Ogni scuola può avere nomi e descrizioni personalizzati senza modificare il prodotto Shopify condiviso.
 
-This matters because the same product may appear in more than one school store. Changing the shared Shopify product name for one school would affect every other school using it.
+Questo è importante perché lo stesso prodotto può comparire in più store scolastici. Modificare il nome del prodotto Shopify condiviso per una singola scuola influenzerebbe tutte le altre scuole che lo utilizzano.
 
-Store management is tied to the signed-in Shopify customer through the App Proxy flow. Before a draft school is renamed or deleted, the system checks the customer identity, the school ID and the current school state.
+La gestione dello store è collegata al cliente Shopify autenticato tramite il flusso App Proxy. Prima di rinominare o eliminare una scuola in bozza, il sistema verifica l'identità del cliente, l'ID della scuola e lo stato corrente della scuola.
