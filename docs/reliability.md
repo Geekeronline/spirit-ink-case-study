@@ -1,37 +1,37 @@
-# Reliability
+# Affidabilità
 
-This system can spend real money and create physical supplier orders, so missing data and uncertain API outcomes need to be handled carefully.
+Questo sistema può spendere denaro reale e creare ordini fisici presso i fornitori, quindi dati mancanti e risultati incerti delle API devono essere gestiti con attenzione.
 
-## Stop when supplier data is missing
+## Bloccare il flusso quando mancano dati del fornitore
 
-If the system does not have the exact supplier data it needs, the order line stops before dispatch. The blocker records what is missing so the issue can be resolved without guessing.
+Se il sistema non dispone dei dati esatti del fornitore di cui ha bisogno, la riga d'ordine viene bloccata prima dell'invio. Il blocco registra ciò che manca, così il problema può essere risolto senza fare supposizioni.
 
-Any mapping without a confirmed supplier identifier stays unavailable until it is verified.
+Qualsiasi mapping privo di un identificativo fornitore confermato rimane non disponibile finché non viene verificato.
 
-## Avoid duplicate supplier orders
+## Evitare ordini duplicati ai fornitori
 
-Before creating a supplier order, the system checks whether that order line already has a supplier order ID. If it does, no new order is created.
+Prima di creare un ordine presso il fornitore, il sistema verifica se quella riga d'ordine possiede già un ID ordine del fornitore. Se esiste, non viene creato un nuovo ordine.
 
-A harder case is when the request was sent but the response never came back. The supplier may have created the order even though the automation cannot confirm it. Those cases go to manual review before any retry, because sending the same order again could create a duplicate and charge the client twice.
+Un caso più complesso si verifica quando la richiesta è stata inviata ma la risposta non è mai tornata. Il fornitore potrebbe aver creato l'ordine anche se l'automazione non riesce a confermarlo. Questi casi vengono inviati a revisione manuale prima di qualsiasi retry, perché inviare nuovamente lo stesso ordine potrebbe creare un duplicato e addebitare il cliente due volte.
 
-## Keep publication under human review
+## Mantenere la pubblicazione sotto revisione umana
 
-The automation prepares school stores and products up to a reviewable state. A person approves them before they become customer-facing.
+L'automazione prepara store scolastici e prodotti fino a uno stato pronto per la revisione. Una persona li approva prima che diventino visibili ai clienti.
 
-The review page shows the rendered artwork and customer-facing presentation, not just database fields, so the person approving it can see what customers will see.
+La pagina di revisione mostra l'artwork renderizzato e la presentazione lato cliente, non soltanto i campi del database, così chi approva può vedere ciò che vedranno i clienti.
 
-## Safety rules
+## Regole di sicurezza
 
-1. Supplier routing only uses exact, confirmed mappings.
-2. Products and school stores are reviewed before customer-facing publication.
-3. Credentials, webhook URLs, approval tokens and infrastructure identifiers stay out of version control.
-4. Signature, identity, supplier-mapping and duplicate-order checks stop the flow when they fail.
-5. Uncertain supplier-order creation goes to manual reconciliation before retry.
-6. When documentation and the live system disagree, the live system is checked again before making a change.
-7. Real supplier orders are not created just to produce an end-to-end test result.
+1. Il routing verso i fornitori utilizza esclusivamente mapping esatti e confermati.
+2. Prodotti e store scolastici vengono revisionati prima della pubblicazione visibile ai clienti.
+3. Credenziali, URL dei webhook, token di approvazione e identificativi dell'infrastruttura restano fuori dal version control.
+4. I controlli su firma, identità, mapping dei fornitori e ordini duplicati bloccano il flusso quando falliscono.
+5. Una creazione incerta dell'ordine presso il fornitore passa attraverso una riconciliazione manuale prima di qualsiasi retry.
+6. Quando documentazione e sistema live non coincidono, il sistema live viene verificato nuovamente prima di effettuare modifiche.
+7. Non vengono creati ordini reali presso i fornitori soltanto per produrre un risultato di test end-to-end.
 
-## Production proof
+## Evidenza in produzione
 
-The main supplier path has completed a real paid order through production, shipment, carrier tracking and Shopify fulfilment.
+Il percorso del fornitore principale ha completato un ordine reale e pagato passando per produzione, spedizione, tracking del corriere ed evasione in Shopify.
 
-The second supplier path is active for confirmed mappings, with routing and supplier integration verified. Its first natural paid order on that path has not yet occurred.
+Il percorso del secondo fornitore è attivo per i mapping confermati, con routing e integrazione del fornitore verificati. Il primo ordine naturale e pagato su quel percorso non si è ancora verificato.
