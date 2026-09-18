@@ -2,66 +2,66 @@
   <img src="assets/spirit-ink-banner.png" alt="Spirit Ink" width="100%">
 </a>
 
-# Spirit Ink automation case study
+# Caso studio sull'automazione di Spirit Ink
 
-Spirit Ink is an e-commerce automation project for custom-printed school clothing.
+Spirit Ink è un progetto di automazione e-commerce per abbigliamento scolastico personalizzato.
 
-Customers create a design in the browser and buy through Shopify. After payment, the automation prepares the order for production, sends it to the correct print supplier and brings tracking back into Shopify.
+I clienti creano un design direttamente nel browser e acquistano tramite Shopify. Dopo il pagamento, l'automazione prepara l'ordine per la produzione, lo invia al fornitore di stampa corretto e riporta il tracking in Shopify.
 
-On the technical side, I was responsible for the system design, the integrations between services, production safeguards, technical troubleshooting and project handoff. The agreed scope was completed on **15 September 2026**.
+Sul piano tecnico, sono stato responsabile della progettazione del sistema, delle integrazioni tra i servizi, delle misure di sicurezza per la produzione, del troubleshooting tecnico e dell'handoff del progetto. Lo scope concordato è stato completato il **15 settembre 2026**.
 
-## The problem
+## Il problema
 
-Spirit Ink works with schools and PTAs that want to sell branded clothing.
+Spirit Ink lavora con scuole e associazioni di genitori che vogliono vendere abbigliamento personalizzato con il proprio branding.
 
-Without automation, the work includes designing graphics, collecting artwork, setting up products, preparing print files, keeping track of supplier variants, sending orders to the right supplier and updating Shopify when they ship. The workload grows with every school and product option.
+Senza automazione, il lavoro comprende la creazione della grafica, la raccolta dei file, la configurazione dei prodotti, la preparazione dei file di stampa, la gestione delle varianti dei fornitori, l'invio degli ordini al fornitore corretto e l'aggiornamento di Shopify quando vengono spediti. Il carico operativo cresce con ogni scuola e con ogni nuova opzione di prodotto.
 
-The goal was to automate as much of that process as possible while still stopping when important supplier data was missing or uncertain.
+L'obiettivo era automatizzare il più possibile questo processo, mantenendo però dei blocchi di sicurezza quando mancavano dati importanti del fornitore o quando le informazioni non erano sufficientemente certe.
 
-## What the system does
+## Cosa fa il sistema
 
 ```mermaid
 flowchart LR
-  A[Create a design] --> B[Create product in Shopify]
-  B --> C[Customer checks out]
-  C --> D[Check supplier mapping]
-  D --> E[Prepare print files]
-  E --> F[Send order to supplier]
-  F --> G[Receive tracking]
-  G --> H[Update Shopify]
+  A[Crea un design] --> B[Crea il prodotto in Shopify]
+  B --> C[Il cliente completa il checkout]
+  C --> D[Verifica il mapping del fornitore]
+  D --> E[Prepara i file di stampa]
+  E --> F[Invia l'ordine al fornitore]
+  F --> G[Riceve il tracking]
+  G --> H[Aggiorna Shopify]
 
-  S[School account] --> T[Create or manage school store]
+  S[Account scuola] --> T[Crea o gestisce lo store scolastico]
   T --> A
 ```
 
-The customer stays in the Spirit Ink and Shopify flow. Once an order is paid, the automation handles the production steps in the background.
+Il cliente rimane all'interno del flusso Spirit Ink e Shopify. Una volta pagato l'ordine, l'automazione gestisce in background i passaggi necessari alla produzione.
 
-Schools also have a separate store-management flow. They can build a school range, keep it as a draft, submit it for review and manage it later from the same customer account.
+Le scuole hanno anche un flusso separato per la gestione del proprio store. Possono costruire una gamma di prodotti, salvarla come bozza, inviarla in revisione e gestirla successivamente dallo stesso account cliente.
 
-The system covers nine product families across two print suppliers. Seven currently support front printing, back printing or both. The main supplier flow has completed a real paid order from Shopify checkout through shipment, tracking and fulfilment. The second supplier is live for mappings that have been fully verified.
+Il sistema copre nove famiglie di prodotto distribuite su due fornitori di stampa. Sette supportano attualmente la stampa sul fronte, sul retro o su entrambi i lati. Il flusso del fornitore principale ha completato un ordine reale e pagato, dal checkout Shopify fino a spedizione, tracking ed evasione dell'ordine. Il secondo fornitore è attivo per i mapping che sono stati verificati completamente.
 
-## My role
+## Il mio ruolo
 
-I defined how the services should connect and where each type of data should live.
+Ho definito come i servizi dovessero comunicare tra loro e dove dovesse risiedere ogni tipo di dato.
 
-I was responsible for the integrations between Shopify, Make, Airtable, Google Cloud Run, Cloudinary and the two print supplier APIs.
+Sono stato responsabile delle integrazioni tra Shopify, Make, Airtable, Google Cloud Run, Cloudinary e le API dei due fornitori di stampa.
 
-I investigated issues that crossed more than one system, including Shopify request handling, Make workflow behaviour, supplier data and fulfilment edge cases.
+Ho analizzato problemi che coinvolgevano più sistemi contemporaneamente, inclusi la gestione delle richieste Shopify, il comportamento dei workflow Make, i dati dei fornitori e i casi limite legati all'evasione degli ordini.
 
-For the higher-risk parts of the flow, I added checks to prevent duplicate supplier orders, incorrect product routing and unintended customer-facing publication.
+Per le parti del flusso a rischio più elevato, ho aggiunto controlli per evitare ordini duplicati ai fornitori, routing errato dei prodotti e pubblicazioni involontarie visibili ai clienti.
 
-I also kept the project documentation current and prepared the final handoff so another person could understand the live setup without reconstructing it from old tests or incident notes.
+Ho inoltre mantenuto aggiornata la documentazione del progetto e preparato l'handoff finale, in modo che un'altra persona potesse comprendere la configurazione live senza dover ricostruire il sistema partendo da vecchi test o note di incidenti.
 
-## Read next
+## Approfondimenti
 
-| Document | What's in it |
+| Documento | Contenuto |
 | --- | --- |
-| [Architecture](docs/architecture.md) | How the main components fit together and where each type of data lives |
-| [Decisions](docs/decisions.md) | Technical decisions and the tradeoffs behind them |
-| [Technical troubleshooting](docs/troubleshooting.md) | Examples of cross-system issues I investigated |
-| [Reliability](docs/reliability.md) | Checks around supplier routing, duplicate actions and unsafe retries |
-| [Project ownership](docs/project-ownership.md) | How I coordinated the work, validated changes and handled handoff |
+| [Architettura](docs/architecture.md) | Come si collegano i componenti principali e dove risiede ogni tipo di dato |
+| [Decisioni](docs/decisions.md) | Le principali decisioni tecniche e i compromessi che le hanno motivate |
+| [Troubleshooting tecnico](docs/troubleshooting.md) | Esempi di problemi cross-system che ho analizzato |
+| [Affidabilità](docs/reliability.md) | Controlli su routing dei fornitori, azioni duplicate e retry non sicuri |
+| [Responsabilità sul progetto](docs/project-ownership.md) | Come ho coordinato il lavoro, validato le modifiche e gestito l'handoff |
 
-## Stack
+## Stack tecnologico
 
-Shopify, Make, Airtable, Google Cloud Run, Cloudinary, GitHub and two print-on-demand supplier APIs.
+Shopify, Make, Airtable, Google Cloud Run, Cloudinary, GitHub e le API di due fornitori di stampa on-demand.
