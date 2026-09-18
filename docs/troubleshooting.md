@@ -1,39 +1,39 @@
-# Technical troubleshooting
+# Troubleshooting tecnico
 
-These are four integration issues I investigated during the project. In each case, the visible problem appeared in one part of the system while the cause was somewhere else in the flow.
+Questi sono quattro problemi di integrazione che ho analizzato durante il progetto. In ogni caso, il problema visibile compariva in una parte del sistema mentre la causa si trovava altrove nel flusso.
 
-## 1. A later workflow stage could not see a status update
+## 1. Una fase successiva del workflow non vedeva un aggiornamento di stato
 
-A record was meant to move through two stages in sequence: generate its mockup, then build the store product. The first stage completed and the database showed the new status, but the second stage still did not run.
+Un record doveva attraversare due fasi in sequenza: generare il mockup, quindi costruire il prodotto dello store. La prima fase si completava e il database mostrava il nuovo stato, ma la seconda fase continuava a non partire.
 
-I checked the filter and the database write first. Both were correct. The issue was how the Make router handled data inside the same execution: both routes were evaluating the version of the record captured when the execution started.
+Ho controllato prima il filtro e la scrittura sul database. Entrambi erano corretti. Il problema era nel modo in cui il router di Make gestiva i dati all'interno della stessa esecuzione: entrambe le route valutavano la versione del record acquisita all'inizio dell'esecuzione.
 
-I separated the two stages into different executions and used the existing approval step as the boundary. That allowed the second stage to read the updated state normally.
+Ho separato le due fasi in esecuzioni differenti e usato il passaggio di approvazione già esistente come confine tra le due. In questo modo la seconda fase poteva leggere normalmente lo stato aggiornato.
 
-## 2. An unsupported expression produced empty output
+## 2. Un'espressione non supportata produceva un output vuoto
 
-Admin review cards appeared blank or only showed part of the expected summary even though the underlying data was present.
+Le card di revisione admin apparivano vuote o mostravano soltanto una parte del riepilogo previsto, anche se i dati sottostanti erano presenti.
 
-The data itself was fine. Two text builders used `concat()`, which was not supported in that Make expression context. Because the failure did not surface as a useful save-time error, it looked like missing data further downstream.
+I dati erano corretti. Due builder di testo utilizzavano `concat()`, che non era supportato in quel contesto di espressione Make. Poiché il problema non emergeva come un errore utile al momento del salvataggio, sembrava che mancassero dati più avanti nel flusso.
 
-I replaced the expression with Make's native interpolation and checked the live workflow again to make sure it was still active and had no incomplete executions waiting.
+Ho sostituito l'espressione con l'interpolazione nativa di Make e ricontrollato il workflow live per assicurarmi che fosse ancora attivo e che non ci fossero esecuzioni incomplete in attesa.
 
-## 3. Shopify added parameters that the image endpoint rejected
+## 3. Shopify aggiungeva parametri rifiutati dall'endpoint immagini
 
-Product preview images disappeared during one part of the School Store review flow, while the same images still rendered correctly when called directly.
+Le immagini di anteprima dei prodotti scomparivano durante una parte del flusso di revisione dello School Store, mentre le stesse immagini continuavano a essere renderizzate correttamente quando richiamate direttamente.
 
-Comparing the two request paths showed that requests passing through Shopify included additional transport parameters. The downstream image endpoint rejected parameters it did not expect.
+Confrontando i due percorsi di richiesta, ho visto che le richieste che passavano attraverso Shopify includevano parametri di trasporto aggiuntivi. L'endpoint immagini downstream rifiutava i parametri che non si aspettava.
 
-The proxy now validates the incoming request and forwards only the parameters the image endpoint needs. That restored the previews without weakening the request checks.
+Il proxy ora valida la richiesta in ingresso e inoltra soltanto i parametri necessari all'endpoint immagini. Questo ha ripristinato le anteprime senza indebolire i controlli sulla richiesta.
 
-## 4. A supplier API rejected signed requests
+## 4. L'API di un fornitore rifiutava le richieste firmate
 
-Supplier order requests kept returning an invalid-signature error even though the payload and secret had already been checked.
+Le richieste d'ordine al fornitore continuavano a restituire un errore di firma non valida, anche se payload e secret erano già stati verificati.
 
-I compared the request construction with the supplier documentation and found that the implementation did not match the signing method the API expected.
+Ho confrontato la costruzione della richiesta con la documentazione del fornitore e ho scoperto che l'implementazione non corrispondeva al metodo di firma previsto dall'API.
 
-After correcting the request to match the documented method, the supplier accepted it and returned an order identifier.
+Dopo aver corretto la richiesta in modo che rispettasse il metodo documentato, il fornitore l'ha accettata e ha restituito un identificativo ordine.
 
-## What I took from these cases
+## Cosa ho ricavato da questi casi
 
-The most useful checks were usually at the boundaries between systems: when Make reads state, what Shopify adds to a request, or exactly what a supplier expects from an API call. Testing those assumptions directly was more effective than changing the component closest to the visible symptom.
+I controlli più utili erano quasi sempre ai confini tra i sistemi: quando Make legge lo stato, cosa Shopify aggiunge a una richiesta o cosa un fornitore si aspetta esattamente da una chiamata API. Verificare direttamente queste assunzioni si è dimostrato più efficace che modificare il componente più vicino al sintomo visibile.
